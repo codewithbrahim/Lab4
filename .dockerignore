@@ -1,0 +1,8 @@
+# Exclure les fichiers/dossiers cachés commençant par ./
+.git
+.gitignore
+.dockerignore
+.env
+.vscode
+node_modules
+*.log
