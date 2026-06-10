@@ -1,29 +1,38 @@
-name : "trivy scan example"
-stages:
-  - test
-  - build
-  - deploy
+name: Security Scan
 
-trivy-scan:
-  stage: test
-  image:
-    name: docker.io/aquasec/trivy:latest
-    entrypoint: [""]
-  script:
-    - trivy image --clear-cache
-    - trivy image --download-db-only
-    - trivy image --severity HIGH,CRITICAL vulnerable-api
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
-build:
-  image: docker:latest
-  stage: build
-  script:
-    - echo "Building the project..."
-    - docker build -t vulnerable-api .
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
-deploy:
-  image: docker:latest
-  stage: deploy
-  script:
-    - echo "Deploying the project..."
-    - docker run -d --name my-app nginx:latest
+      - name: Build image
+        run: docker build -t myapp:${{ github.sha }} .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: 'myapp:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+          ignore-unfixed: true
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
