@@ -1,0 +1,28 @@
+stages:
+  - test
+  - build
+  - deploy
+
+trivy-scan:
+  stage: test
+  image:
+    name: docker.io/aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy image --clear-cache
+    - trivy image --download-db-only
+    - trivy image --severity HIGH,CRITICAL vulnerable-api
+
+build:
+  image: docker:latest
+  stage: build
+  script:
+    - echo "Building the project..."
+    - docker build -t vulnerable-api .
+
+deploy:
+  image: docker:latest
+  stage: deploy
+  script:
+    - echo "Deploying the project..."
+    - docker run -d --name my-app nginx:latest
