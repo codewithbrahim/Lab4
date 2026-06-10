@@ -19,12 +19,12 @@ jobs:
           persist-credentials: false
 
       - name: Build image
-        run: docker build -t myapp:${{ github.sha }} .
+        run: docker build -t myapp:vulnerabilite-api .
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: 'myapp:${{ github.sha }}'
+          image-ref: 'myapp:vulnerabilite-api'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
